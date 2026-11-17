@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cal 에셋</title>
+<style>
+:root{--bg:#080A0D;--panel:#0D1116;--line:#1C2630;--ink:#DCE4EC;--sub:#8D9AA8;--faint:#5E6B79;--cyan:#3EE6D6;--brass:#D4A84F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard','Noto Sans KR',sans-serif}
+header{padding:20px 16px 12px;border-bottom:1px solid var(--line);max-width:1100px;margin:0 auto}
+.k{font:10px/1 ui-monospace,monospace;letter-spacing:.14em;color:var(--cyan)}
+h1{margin:6px 0 4px;font-size:20px}
+.hint{font-size:12.5px;color:var(--sub);line-height:1.6}
+code{font-family:ui-monospace,monospace;color:var(--brass);word-break:break-all}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+nav button{all:unset;cursor:pointer;font-size:12.5px;padding:5px 10px;border:1px solid var(--line);color:var(--sub)}
+nav button[aria-pressed=true]{border-color:var(--cyan);color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);cursor:pointer}
+figure img{display:block;width:100%;aspect-ratio:832/1216;object-fit:cover;background:#111}
+figcaption{padding:8px 9px;font-size:12px;line-height:1.45;color:var(--sub)}
+figcaption b{font:600 11px ui-monospace,monospace;color:var(--brass);margin-right:6px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--cyan);color:var(--bg);font-size:12.5px;padding:7px 12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+<div class="k">CAL / ASSETS</div>
+<h1>칼데라 에셋 미리보기</h1>
+<div class="hint">그림을 누르면 봇에 쓰는 이미지 문법이 복사돼요. 주소 형식: <code id="fmt"></code></div>
+<nav id="tabs"></nav>
+</header>
+<main id="grid"></main>
+<div class="toast" id="toast">복사됨</div>
+<script>
+let data, cur = 0;
+const $ = (id) => document.getElementById(id);
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1200)}
+function render(){
+  const c = data.chars[cur];
+  $('fmt').textContent = data.base + c.key + '/번호.webp';
+  $('tabs').innerHTML = data.chars.map((x,i)=>`<button aria-pressed="${i===cur}" data-i="${i}">${x.name} ${Object.keys(x.items).length}</button>`).join('');
+  $('grid').innerHTML = Object.entries(c.items).map(([n,t])=>{
+    const u = data.base + c.key + '/' + n + '.webp';
+    return `<figure data-u="${u}"><img src="${u}" alt="${c.name} ${n}" loading="lazy"><figcaption><b>${n}</b>${t}</figcaption></figure>`;
+  }).join('');
+}
+document.addEventListener('click',(e)=>{
+  const b = e.target.closest('nav button'); if(b){cur=+b.dataset.i;render();return}
+  const f = e.target.closest('figure'); if(f){navigator.clipboard.writeText('![img]('+f.dataset.u+')').then(()=>toast('복사됨'),()=>toast(f.dataset.u))}
+});
+fetch('list.json').then(r=>r.json()).then(d=>{data=d;render()});
+</script>
+</body>
+</html>
